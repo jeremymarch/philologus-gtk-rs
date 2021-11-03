@@ -1,0 +1,10 @@
+[package]
+name = "philologus-gtk-rs"
+version = "0.1.0"
+authors = ["Jeremy March <jmarch@gradcenter.cuny.edu>"]
+edition = "2021"
+
+[dependencies]
+gtk = { version = "0.14", package = "gtk" }
+webkit2gtk = "0.15.2"
+
