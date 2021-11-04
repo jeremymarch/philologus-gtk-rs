@@ -21,6 +21,8 @@ use gtk::glib;
 use gtk::prelude::*;
 use std::rc::Rc;
 
+use gtk::glib::clone;
+
 use serde::Deserialize;
 use reqwest::Error;
 
@@ -106,7 +108,7 @@ fn build_ui(application: &gtk::Application) {
     window.set_title("philolog.us");
     window.set_border_width(10);
     window.set_position(gtk::WindowPosition::Center);
-    window.set_default_size(580, 250);
+    window.set_default_size(600, 300);
 
     let hbox = gtk::Box::new(gtk::Orientation::Horizontal, 8);
     let web_view = WebView::new();
@@ -118,10 +120,6 @@ fn build_ui(application: &gtk::Application) {
     window.add(&hbox);
 
     let entry = gtk::Entry::new();
-    entry.connect_changed(move | entry: &gtk::Entry | {
-        let x = entry.text();
-        println!("changed {}", x );
-    });
     vbox.add(&entry);
 
     let sw = gtk::ScrolledWindow::new(None::<&gtk::Adjustment>, None::<&gtk::Adjustment>);
@@ -138,6 +136,24 @@ fn build_ui(application: &gtk::Application) {
     sw.add(&treeview);
 
     add_columns(&model, &treeview);
+
+    entry.connect_changed(clone!(@weak treeview => move | entry: &gtk::Entry | {
+        let x = entry.text();
+        println!("changed {}", x );
+
+        let m = treeview.model();
+
+        let n = 100;
+
+        let values: [(u32, &dyn ToValue); 2] = [
+            (0, &n),
+            (1, &x),
+        ];
+        model.set(&model.append(), &values);
+
+
+
+    }));
 
     window.show_all();
 }
