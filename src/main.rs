@@ -72,6 +72,13 @@ struct JsonResponse {
     arrOptions: Vec<GreekWords>
 }
 
+#[derive(Debug)]
+#[repr(i32)]
+enum Columns {
+    Id = 0,
+    Word,
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     let application = gtk::Application::new(
@@ -79,25 +86,18 @@ async fn main() -> Result<(), Error> {
         Default::default(),
     );
 
-    application.connect_startup(build_ui);
-
     let request_url2 = format!("https://philolog.us/wtgreekserv.php?n=101&idprefix=test1&x=0.045663999508706477&requestTime=1635983991202&page=0&mode=context&query={{\"regex\":\"0\",\"lexicon\":\"lsj\",\"tag_id\":\"0\",\"root_id\":\"0\",\"w\":\"ab\"}}");
     //println!("{}", request_url2);
     let response = reqwest::get(&request_url2).await?;
 
-    println!("{:?}", response);
-    let users: JsonResponse = response.json().await?;
-    println!("{:?}", users);
+    //println!("{:?}", response);
+    let words: JsonResponse = response.json().await?;
+    //println!("{:?}", users);
+
+    application.connect_activate(build_ui);
 
     application.run();
     Ok(())
-}
-
-#[derive(Debug)]
-#[repr(i32)]
-enum Columns {
-    Id = 0,
-    Word,
 }
 
 fn build_ui(application: &gtk::Application) {
@@ -117,8 +117,12 @@ fn build_ui(application: &gtk::Application) {
     hbox.pack_start(&web_view, true, true, 8);
     window.add(&hbox);
 
-    let label = gtk::Entry::new();
-    vbox.add(&label);
+    let entry = gtk::Entry::new();
+    entry.connect_changed(move | entry: &gtk::Entry | {
+        let x = entry.text();
+        println!("changed {}", x );
+    });
+    vbox.add(&entry);
 
     let sw = gtk::ScrolledWindow::new(None::<&gtk::Adjustment>, None::<&gtk::Adjustment>);
     sw.set_shadow_type(gtk::ShadowType::EtchedIn);
