@@ -64,14 +64,19 @@ struct JsonResponse {
     wtprefix: String,
     nocache: String,
     container: String,
-    requestTime: String,
-    selectId: String,
+    #[serde(rename(deserialize = "requestTime"))]
+    request_time: String,
+    #[serde(rename(deserialize = "selectId"))]
+    select_id: String,
     page: String,
-    lastPage: String,
-    lastpageUp: Option<String>,
+    #[serde(rename(deserialize = "lastPage"))]
+    last_age: String,
+    #[serde(rename(deserialize = "lastpageUp"))]
+    last_page_up: Option<String>,
     scroll: String,
     query: String,
-    arrOptions: Vec<GreekWords>
+    #[serde(rename(deserialize = "arrOptions"))]
+    arr_options: Vec<GreekWords>
 }
 
 #[derive(Debug)]
@@ -81,19 +86,19 @@ enum Columns {
     Word,
 }
 
-#[tokio::main]
-async fn main() -> Result<(), Error> {
+
+fn main() -> Result<(), Error> {
     let application = gtk::Application::new(
         Some("com.github.jeremymarch.philologus-gtk-rs"),
         Default::default(),
     );
 
-    let request_url2 = format!("https://philolog.us/wtgreekserv.php?n=101&idprefix=test1&x=0.045663999508706477&requestTime=1635983991202&page=0&mode=context&query={{\"regex\":\"0\",\"lexicon\":\"lsj\",\"tag_id\":\"0\",\"root_id\":\"0\",\"w\":\"ab\"}}");
+    //let request_url2 = format!("https://philolog.us/wtgreekserv.php?n=101&idprefix=test1&x=0.045663999508706477&requestTime=1635983991202&page=0&mode=context&query={{\"regex\":\"0\",\"lexicon\":\"lsj\",\"tag_id\":\"0\",\"root_id\":\"0\",\"w\":\"ab\"}}");
     //println!("{}", request_url2);
-    let response = reqwest::get(&request_url2).await?;
+    //let response = reqwest::get(&request_url2).await?;
 
     //println!("{:?}", response);
-    let words: JsonResponse = response.json().await?;
+    //let words: JsonResponse = response.json().await?;
     //println!("{:?}", users);
 
     application.connect_activate(build_ui);
@@ -139,23 +144,33 @@ fn build_ui(application: &gtk::Application) {
 
     entry.connect_changed(clone!(@weak treeview => move | entry: &gtk::Entry | {
         let x = entry.text();
-        println!("changed {}", x );
+        //println!("changed {}", x );
 
-        let m = treeview.model();
-
-        let n = 100;
-
-        let values: [(u32, &dyn ToValue); 2] = [
-            (0, &n),
-            (1, &x),
-        ];
-        model.set(&model.append(), &values);
-
-
-
+        get_words(&*model, &x)
     }));
 
     window.show_all();
+}
+
+fn get_words(store:&gtk::ListStore, s:&str) {
+    
+    store.clear();
+    let url = format!("https://philolog.us/wtgreekserv.php?n=101&idprefix=test1&x=0.045663999508706477&requestTime=1635983991202&page=0&mode=context&query={{\"regex\":\"0\",\"lexicon\":\"lsj\",\"tag_id\":\"0\",\"root_id\":\"0\",\"w\":\"{}\"}}", s);
+    //println!("{}", request_url2);
+    let response = reqwest::blocking::get(&url);
+    //println!("{:?}", response);
+
+    let words: JsonResponse = response.unwrap().json().unwrap();
+    //println!("{:?}", words);
+
+    for w in words.arr_options {
+
+        let values: [(u32, &dyn ToValue); 2] = [
+            (0, &w.i),
+            (1, &w.r.0),
+        ];
+        store.set(&store.append(), &values);
+    }
 }
 
 struct Data {
