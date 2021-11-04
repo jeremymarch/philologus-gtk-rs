@@ -21,10 +21,59 @@ use gtk::glib;
 use gtk::prelude::*;
 use std::rc::Rc;
 
+use serde::Deserialize;
+use reqwest::Error;
+
 extern crate webkit2gtk;
 use webkit2gtk::{traits::WebViewExt, WebView};
 
-fn main() {
+#[derive(Deserialize, Debug)]
+struct User {
+login: String,
+id:u64,
+node_id: String,
+avatar_url: String,
+gravatar_id: String,
+url: String,
+html_url: String,
+followers_url: String,
+following_url: String,
+gists_url: String,
+starred_url: String,
+subscriptions_url: String,
+organizations_url: String,
+repos_url: String,
+events_url: String,
+received_events_url: String,
+#[serde(rename(deserialize = "type"))]
+type1: String,
+site_admin: bool
+}
+
+#[derive(Debug, Deserialize,Clone)]
+pub struct GreekWords { 
+    pub i: i32, 
+    pub r: (String,u32,u32)
+}
+
+#[derive(Debug, Deserialize, Clone)]
+struct JsonResponse {
+    error: String,
+    wtprefix: String,
+    nocache: String,
+    container: String,
+    requestTime: String,
+    selectId: String,
+    page: String,
+    lastPage: String,
+    lastpageUp: Option<String>,
+    scroll: String,
+    query: String,
+    arrOptions: Vec<GreekWords>
+}
+
+#[tokio::main]
+async fn main() -> Result<(), Error> {
     let application = gtk::Application::new(
         Some("com.github.jeremymarch.philologus-gtk-rs"),
         Default::default(),
@@ -32,7 +81,16 @@ fn main() {
 
     application.connect_startup(build_ui);
 
+    let request_url2 = format!("https://philolog.us/wtgreekserv.php?n=101&idprefix=test1&x=0.045663999508706477&requestTime=1635983991202&page=0&mode=context&query={{\"regex\":\"0\",\"lexicon\":\"lsj\",\"tag_id\":\"0\",\"root_id\":\"0\",\"w\":\"ab\"}}");
+    //println!("{}", request_url2);
+    let response = reqwest::get(&request_url2).await?;
+
+    println!("{:?}", response);
+    let users: JsonResponse = response.json().await?;
+    println!("{:?}", users);
+
     application.run();
+    Ok(())
 }
 
 #[derive(Debug)]
